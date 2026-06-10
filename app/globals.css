@@ -1,0 +1,183 @@
+@import "tailwindcss";
+@import "lineicons/assets/icon-fonts/lineicons.css";
+
+:root {
+  --bg-main: #ffffff;
+  --bg-sidebar: #f9fafb;
+  --bg-input: #ffffff;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --accent: #4d6bfe;
+  --accent-hover: #3d5ae8;
+  --user-bubble: #edf3ff;
+  --code-bg: #f6f8fa;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+/* Markdown prose overrides (light) */
+.prose-chat {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-primary);
+}
+
+.prose-chat p {
+  margin: 0.5em 0;
+}
+
+.prose-chat pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.prose-chat code {
+  font-size: 0.9em;
+}
+
+.prose-chat ul,
+.prose-chat ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.prose-chat a {
+  color: var(--accent);
+}
+
+/* 消息内容区：子元素统一占满列宽 */
+.message-content {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.message-content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Markdown 块级元素统一宽度 */
+.md-block-full,
+.prose-chat .md-block-full {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 代码块统一宽度 */
+.prose-chat .code-block {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.prose-chat .code-block pre {
+  margin: 0;
+  padding: 1rem;
+  background: var(--code-bg);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.prose-chat .code-block pre code {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.prose-chat .code-block pre code.hljs {
+  padding: 0;
+  background: transparent;
+}
+
+.prose-chat .code-block pre code.hljs span {
+  display: inline;
+}
+
+.prose-chat .inline-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+/* highlight.js 高亮样式修正 */
+.prose-chat .hljs {
+  background: transparent !important;
+  color: var(--text-primary);
+}
+
+/* Markdown 表格（对比展示） */
+.markdown-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.markdown-table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.markdown-table-head {
+  background: var(--bg-sidebar);
+}
+
+.markdown-table-th {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.markdown-table-cell {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  vertical-align: top;
+  color: var(--text-primary);
+}
+
+.markdown-table-cell:last-child {
+  border-right: none;
+}
+
+.markdown-table-row:last-child .markdown-table-cell {
+  border-bottom: none;
+}
+
+.markdown-table-row:hover {
+  background: #fafbfc;
+}

@@ -1,0 +1,41 @@
+{
+  "name": "aigc-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "docker:init": "test -f docker/.env.docker || cp docker/.env.docker.example docker/.env.docker",
+    "docker:build": "pnpm docker:init && docker compose -f docker/docker-compose.yml build",
+    "docker:up": "pnpm docker:init && docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "package": "sh scripts/package-standalone.sh",
+    "deploy:package": "pnpm package"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "lineicons": "^1.3.2",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
+    "uuid": "^11.1.0",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.8",
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^9.27.0",
+    "eslint-config-next": "^15.3.3",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3"
+  }
+}

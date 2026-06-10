@@ -1,0 +1,20 @@
+services:
+  aigc-web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: aigc-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env.docker
+    environment:
+      NODE_ENV: production
+    networks:
+      - aigc-web
+
+networks:
+  aigc-web:
+    name: aigc-web
+    driver: bridge
