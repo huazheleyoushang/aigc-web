@@ -32,6 +32,7 @@ yarn-error.log*
 
 # md
 *.md
+!README.md
 
 # env files
 .env
