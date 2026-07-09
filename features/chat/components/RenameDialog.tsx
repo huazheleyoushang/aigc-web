@@ -56,13 +56,13 @@ export function RenameDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-gray-100"
+              className="rounded-lg px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-gray-100 hover:cursor-pointer"
             >
               取消
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)]"
+              className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)] hover:cursor-pointer"
             >
               确定
             </button>

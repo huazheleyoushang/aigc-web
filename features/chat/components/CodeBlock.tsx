@@ -29,7 +29,7 @@ export function CodeBlock({ children, codeText, className }: CodeBlockProps) {
         <button
           type="button"
           onClick={() => void handleCopy()}
-          className={`rounded px-2 py-0.5 hover:bg-white hover:text-[var(--text-primary)] ${
+          className={`rounded px-2 py-0.5 hover:bg-white hover:text-[var(--text-primary)] hover:cursor-pointer ${
             status === "failed" ? "text-red-500" : ""
           }`}
         >

@@ -8,6 +8,7 @@ import {
   isHistoryConversation,
 } from "@/lib/utils";
 import type { Conversation } from "@/types/domain";
+import { useGuestStore } from "@/stores/guestStore";
 
 const repo = getConversationRepository();
 const ACTIVE_CONV_KEY = "aigc_active_conversation";
@@ -75,8 +76,12 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   async initActive(userId) {
     if (!userId) return;
 
-    if (!get().loaded) {
+    // 用户 ID 变化或尚未加载时，重新拉取数据
+    const allLoaded = get().loaded;
+    const hasData = get().conversations.some((c) => c.userId === userId);
+    if (!allLoaded || !hasData) {
       await get().load(userId);
+      if (!get().loaded) return;
     }
 
     const cached = readCachedActiveId();
@@ -101,6 +106,10 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
 
   async load(userId) {
     if (!userId) return;
+    if (useGuestStore.getState().isGuest) {
+      set({ conversations: [], loaded: true });
+      return;
+    }
 
     await pruneExtraEmpty(userId);
     const list = sortConversations(await repo.list(userId));
@@ -116,6 +125,8 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       throw new Error("userId is required");
     }
 
+    const isGuest = useGuestStore.getState().isGuest;
+
     if (!get().loaded) {
       await get().load(userId);
     }
@@ -124,7 +135,7 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       (c) => c.id === id && c.userId === userId,
     );
 
-    if (!conv) {
+    if (!conv && !isGuest) {
       const fromRepo = await repo.get(id);
       if (fromRepo && fromRepo.userId === userId) {
         conv = fromRepo;
@@ -139,19 +150,27 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
 
     if (!conv) {
       conv = { ...createConversation(userId), id };
-      await repo.save(conv);
-      if (isEmptyConversation(conv)) {
-        await pruneExtraEmpty(userId, conv.id);
+      if (!isGuest) {
+        await repo.save(conv);
+        if (isEmptyConversation(conv)) {
+          await pruneExtraEmpty(userId, conv.id);
+        }
+        const list = sortConversations(await repo.list(userId));
+        set({ conversations: list, loaded: true });
+        conv = list.find((c) => c.id === id) ?? conv;
+      } else {
+        set((s) => ({
+          conversations: [conv as Conversation, ...s.conversations],
+          loaded: true,
+        }));
       }
-      const list = sortConversations(await repo.list(userId));
-      set({ conversations: list, loaded: true });
-      conv = list.find((c) => c.id === id) ?? conv;
     }
 
     return conv;
   },
 
   async upsert(conversation) {
+    if (useGuestStore.getState().isGuest) return; // 游客不持久化
     await repo.save(conversation);
     set((s) => {
       const index = s.conversations.findIndex(
@@ -167,6 +186,11 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   },
 
   async create(userId) {
+    if (useGuestStore.getState().isGuest) {
+      const conv = createConversation(userId);
+      set((s) => ({ conversations: [conv, ...s.conversations], loaded: true }));
+      return conv;
+    }
     const conv = createConversation(userId);
     await repo.save(conv);
     await pruneExtraEmpty(userId, conv.id);
@@ -180,6 +204,10 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       throw new Error("userId is required");
     }
 
+    if (useGuestStore.getState().isGuest && !get().loaded) {
+      set({ conversations: [], loaded: true });
+    }
+
     if (!get().loaded) {
       await get().load(userId);
     }
@@ -188,20 +216,31 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       (c) => c.userId === userId && isEmptyConversation(c),
     );
     if (existing) {
-      await pruneExtraEmpty(userId, existing.id);
-      const refreshed = (await repo.list(userId)).find(
-        (c) => c.id === existing.id,
-      );
-      if (refreshed) {
-        set({ conversations: sortConversations(await repo.list(userId)) });
-        return refreshed;
+      if (!useGuestStore.getState().isGuest) {
+        await pruneExtraEmpty(userId, existing.id);
+        const refreshed = (await repo.list(userId)).find(
+          (c) => c.id === existing.id,
+        );
+        if (refreshed) {
+          set({ conversations: sortConversations(await repo.list(userId)) });
+          return refreshed;
+        }
       }
+      return existing;
     }
 
     return get().create(userId);
   },
 
   async remove(userId, id) {
+    if (useGuestStore.getState().isGuest) {
+      set((s) => ({
+        conversations: s.conversations.filter((c) => c.id !== id),
+        activeConversationId:
+          s.activeConversationId === id ? null : s.activeConversationId,
+      }));
+      return;
+    }
     if (!userId) return;
 
     const target = get().conversations.find((c) => c.id === id);
@@ -223,6 +262,7 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   },
 
   async rename(userId, id, title) {
+    if (useGuestStore.getState().isGuest) return; // 游客不持久化
     const trimmed = title.trim();
     if (!userId || !trimmed) return;
 
@@ -237,6 +277,7 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   },
 
   async togglePin(userId, id) {
+    if (useGuestStore.getState().isGuest) return; // 游客不持久化
     if (!userId) return;
 
     const conv = get().conversations.find((c) => c.id === id);

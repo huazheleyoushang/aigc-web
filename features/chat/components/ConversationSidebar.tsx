@@ -2,21 +2,36 @@
 
 import { useEffect, useRef, useState } from "react";
 import { LINE_ICONS, LineIcon } from "@/components/LineIcon";
-import { BrandLogo } from "@/features/chat/components/BrandLogo";
 import { ConversationItemMenu } from "@/features/chat/components/ConversationItemMenu";
 import { DeleteConversationDialog } from "@/features/chat/components/DeleteConversationDialog";
 import { RenameDialog } from "@/features/chat/components/RenameDialog";
-import { SearchIconButton } from "@/features/chat/components/SidebarIconButtons";
-import { SidebarToggleButton } from "@/features/chat/components/SidebarToggleButton";
 import { shareConversation } from "@/lib/conversation-share";
 import { groupConversationsByDate } from "@/lib/group-conversations";
+import { isHistoryConversation } from "@/lib/utils";
 import {
   selectHistoryConversations,
   useConversationStore,
 } from "@/stores/conversationStore";
 import type { Conversation, User } from "@/types/domain";
+import { useAuthStore } from "@/stores/authStore";
+import { useGuestStore, GUEST_USER_ID } from "@/stores/guestStore";
 
 const SIDEBAR_WIDTH = "w-[260px]";
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: (typeof LINE_ICONS)[keyof typeof LINE_ICONS];
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { id: "new-chat", label: "新聊天", icon: LINE_ICONS.commentPlus },
+  { id: "search", label: "搜索聊天", icon: LINE_ICONS.search },
+  { id: "files", label: "文件库", icon: LINE_ICONS.folder },
+  { id: "projects", label: "项目", icon: LINE_ICONS.briefcase },
+  { id: "apps", label: "应用", icon: LINE_ICONS.grid },
+  { id: "codex", label: "Codex", icon: LINE_ICONS.code },
+];
 
 interface ConversationSidebarProps {
   user: User;
@@ -50,10 +65,14 @@ export function ConversationSidebar({
   const load = useConversationStore((s) => s.load);
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [renameTarget, setRenameTarget] = useState<Conversation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const menuAnchorRef = useRef<HTMLButtonElement>(null);
+
+  const authUser = useAuthStore((s) => s.user);
+  const isGuest = useGuestStore((s) => s.isGuest);
 
   useEffect(() => {
     if (!loaded) {
@@ -67,8 +86,18 @@ export function ConversationSidebar({
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const history = selectHistoryConversations(conversations);
-  const groupedHistory = groupConversationsByDate(history);
+  // 所有对话（含空对话），置顶优先
+  const allConvs = conversations
+    .filter((c) => c.userId === user.id)
+    .sort((a, b) => {
+      const aPinned = a.pinned ? 1 : 0;
+      const bPinned = b.pinned ? 1 : 0;
+      if (aPinned !== bPinned) return bPinned - aPinned;
+      return b.updatedAt - a.updatedAt;
+    });
+  // 对话记录：只显示已有消息的会话（过滤掉"新对话"）
+  const historyConvs = allConvs.filter(isHistoryConversation);
+  const groupedHistory = groupConversationsByDate(historyConvs);
 
   const showToast = (message: string) => setToast(message);
 
@@ -92,13 +121,16 @@ export function ConversationSidebar({
   };
 
   const openMenuConversation = openMenuId
-    ? history.find((conv) => conv.id === openMenuId)
+    ? allConvs.find((conv) => conv.id === openMenuId)
     : undefined;
+
+  // 用户名显示：优先用真实用户，否则游客
+  const displayInitial = (authUser?.username ?? "游")?.charAt(0).toUpperCase();
 
   return (
     <>
       <aside
-        className={`flex h-full shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white transition-[width] duration-200 ease-in-out ${
+        className={`flex h-full shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[#f9fafb] transition-[width] duration-200 ease-in-out ${
           collapsible
             ? `hidden md:flex ${collapsed ? "w-0 border-r-0" : SIDEBAR_WIDTH}`
             : SIDEBAR_WIDTH
@@ -109,110 +141,173 @@ export function ConversationSidebar({
             collapsed && collapsible ? "invisible" : "visible"
           }`}
         >
-          <div className="flex items-center justify-between gap-2 px-4 py-4">
-            <BrandLogo />
-            <div className="flex items-center gap-0.5">
-              <SearchIconButton onClick={onOpenSearch} />
-              {onToggleCollapse && (
-                <SidebarToggleButton
-                  collapsed={collapsed}
-                  onClick={onToggleCollapse}
-                />
-              )}
+          {/* 顶部：小 logo */}
+          <div className="flex items-center justify-between px-4 py-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-xs font-bold text-white">
+                A
+              </div>
             </div>
-          </div>
-
-          <div className="px-3 pb-4">
-            <button
-              type="button"
-              onClick={onNewChat}
-              className="flex w-full items-center gap-2 rounded-full border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] shadow-sm transition hover:bg-gray-50"
-            >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
-                <LineIcon name={LINE_ICONS.plus} size={12} />
-              </span>
-              开启新对话
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-2 pb-3">
-            {groupedHistory.length === 0 ? (
-              <p className="px-2 text-sm text-[var(--text-muted)]">
-                暂无历史记录
-              </p>
-            ) : (
-              groupedHistory.map((group) => (
-                <div key={group.label} className="mb-3">
-                  <p className="px-3 pb-1.5 text-xs text-[var(--text-muted)]">
-                    {group.label}
-                  </p>
-                  <ul className="space-y-0.5">
-                    {group.items.map((conv) => {
-                      const isActive = conv.id === activeConversationId;
-                      const menuOpen = openMenuId === conv.id;
-
-                      return (
-                        <li key={conv.id} className="group relative">
-                          <button
-                            type="button"
-                            onClick={() => setActiveConversationId(conv.id)}
-                            className={`flex w-full items-center gap-1 truncate rounded-xl py-2.5 pl-3 pr-9 text-left text-sm transition ${
-                              isActive
-                                ? "bg-[var(--user-bubble)] font-medium text-[var(--accent)]"
-                                : "text-[var(--text-secondary)] hover:bg-gray-50"
-                            }`}
-                          >
-                            {conv.pinned && (
-                              <LineIcon
-                                name={LINE_ICONS.pin}
-                                size={12}
-                                className="shrink-0 text-[var(--accent)]"
-                                aria-label="已置顶"
-                              />
-                            )}
-                            <span className="truncate">{conv.title}</span>
-                          </button>
-
-                          <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                            <button
-                              ref={menuOpen ? menuAnchorRef : undefined}
-                              type="button"
-                              aria-label="更多操作"
-                              aria-expanded={menuOpen}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(menuOpen ? null : conv.id);
-                              }}
-                              className={`flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-white/80 hover:text-[var(--text-primary)] ${
-                                menuOpen || isActive
-                                  ? "opacity-100"
-                                  : "opacity-0 group-hover:opacity-100"
-                              }`}
-                            >
-                              <LineIcon name={LINE_ICONS.more} size={14} />
-                            </button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
+                className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-gray-200 hover:cursor-pointer transition"
+              >
+                <LineIcon
+                  name={collapsed ? LINE_ICONS.layout : LINE_ICONS.menu}
+                  size={16}
+                />
+              </button>
             )}
           </div>
 
+          {/* 导航列表 */}
+          <nav className="flex-1 overflow-y-auto px-2">
+            <ul className="space-y-0.5">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (item.id === "new-chat") {
+                        onNewChat();
+                      } else if (item.id === "search") {
+                        onOpenSearch?.();
+                      }
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl py-2.5 pl-3 pr-4 text-sm transition hover:cursor-pointer ${
+                      item.id === "new-chat"
+                        ? "bg-white font-medium text-[var(--text-primary)] shadow-sm"
+                        : "text-[var(--text-secondary)] hover:bg-gray-100 hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    <LineIcon
+                      name={item.icon}
+                      size={18}
+                      className="shrink-0"
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            {/* 对话记录分组列表 */}
+            {groupedHistory.length > 0 && (
+              <>
+                <div className="mt-4 mb-1 px-3 text-[11px] font-medium text-[var(--text-tertiary)]">
+                  对话记录
+                </div>
+                <ul className="space-y-0.5">
+                  {groupedHistory.map((group) => (
+                    <li key={group.label} className="px-1">
+                      <div className="py-1 text-[11px] font-medium text-[var(--text-tertiary)]">
+                        {group.label}
+                      </div>
+                      <ul className="space-y-0.5">
+                        {group.items.map((conv) => {
+                          const isActive = conv.id === activeConversationId;
+                          const isMenuOpen = openMenuId === conv.id;
+                          return (
+                            <li key={conv.id} className="relative">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveConversationId(conv.id)
+                                }
+                                title={conv.title}
+                                className={`group flex w-full items-center gap-2 rounded-xl py-2.5 pl-3 pr-2 text-left text-sm transition hover:cursor-pointer ${
+                                  isActive
+                                    ? "bg-white font-medium text-[var(--text-primary)] shadow-sm"
+                                    : "text-[var(--text-secondary)] hover:bg-gray-100 hover:text-[var(--text-primary)]"
+                                }`}
+                              >
+                                {conv.pinned && (
+                                  <LineIcon
+                                    name={LINE_ICONS.pin}
+                                    size={12}
+                                    className="shrink-0 text-[var(--text-tertiary)]"
+                                  />
+                                )}
+                                <span className="min-w-0 flex-1 truncate">
+                                  {conv.title}
+                                </span>
+                                {/* 操作按钮：hover 时显示 */}
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    if (isGuest) return; // 游客不显示菜单
+                                    e.stopPropagation();
+                                    setOpenMenuId(
+                                      isMenuOpen ? null : conv.id,
+                                    );
+                                    setMenuAnchor(e.currentTarget);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (isGuest) return;
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.preventDefault();
+                                      setOpenMenuId(
+                                        isMenuOpen ? null : conv.id,
+                                      );
+                                      setMenuAnchor(e.currentTarget);
+                                    }
+                                  }}
+                                  aria-label="操作"
+                                  className={`shrink-0 cursor-pointer rounded p-0.5 text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 ${
+                                    isGuest
+                                      ? "pointer-events-none"
+                                      : "hover:bg-gray-100"
+                                  }`}
+                                >
+                                  <LineIcon
+                                    name={LINE_ICONS.more}
+                                    size={14}
+                                  />
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </nav>
+
+          {/* Toast 提示 */}
           {toast && (
             <div className="mx-3 mb-3 rounded-lg bg-[var(--text-primary)] px-3 py-2 text-center text-xs text-white">
               {toast}
             </div>
           )}
+          {/* 底部：用户信息 */}
+          <div className="mt-3 border-t border-[var(--border)] px-3 py-2">
+            {authUser ? (
+              <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:cursor-pointer hover:bg-gray-100 transition">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-medium text-white">
+                  {displayInitial}
+                </div>
+                <span className="truncate">{authUser.username}</span>
+              </div>
+            ) : (
+              <div className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-tertiary)]">
+                未登录
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
-      {openMenuConversation && (
+      {openMenuConversation && menuAnchor && !isGuest && (
         <ConversationItemMenu
           open
-          anchorRef={menuAnchorRef}
+          anchorRef={{ current: menuAnchor }}
           pinned={openMenuConversation.pinned}
           onClose={() => setOpenMenuId(null)}
           onRename={() => setRenameTarget(openMenuConversation)}
@@ -227,18 +322,22 @@ export function ConversationSidebar({
         />
       )}
 
-      <DeleteConversationDialog
-        open={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteConfirm}
-      />
+      {!isGuest && (
+        <>
+          <DeleteConversationDialog
+            open={Boolean(deleteTarget)}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={handleDeleteConfirm}
+          />
 
-      <RenameDialog
-        open={Boolean(renameTarget)}
-        title={renameTarget?.title ?? ""}
-        onClose={() => setRenameTarget(null)}
-        onConfirm={(title) => void handleRenameConfirm(title)}
-      />
+          <RenameDialog
+            open={Boolean(renameTarget)}
+            title={renameTarget?.title ?? ""}
+            onClose={() => setRenameTarget(null)}
+            onConfirm={(title) => void handleRenameConfirm(title)}
+          />
+        </>
+      )}
     </>
   );
 }

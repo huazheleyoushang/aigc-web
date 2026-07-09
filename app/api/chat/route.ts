@@ -5,17 +5,8 @@ import {
 } from "@/lib/llm/gateway";
 import { MaasConfigError } from "@/lib/llm/maas-provider";
 import { createId } from "@/lib/utils";
-import { getSession } from "@/lib/session";
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session) {
-    return Response.json(
-      { error: { code: "unauthorized", message: "未登录" } },
-      { status: 401 },
-    );
-  }
-
   const requestId = request.headers.get("X-Request-Id") ?? createId();
   const clientIp =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
@@ -82,7 +73,7 @@ export async function POST(request: Request) {
 
   if (process.env.NODE_ENV === "development") {
     console.log(
-      `[chat] requestId=${requestId} userId=${session.userId} model=${validated.data.model} latency=${Date.now() - start}ms`,
+      `[chat] requestId=${requestId} model=${validated.data.model} latency=${Date.now() - start}ms`,
     );
   }
 

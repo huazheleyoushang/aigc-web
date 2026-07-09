@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  type KeyboardEvent,
-} from "react";
 import { LINE_ICONS, LineIcon } from "@/components/LineIcon";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 
 interface ChatInputProps {
   disabled?: boolean;
@@ -15,6 +10,7 @@ interface ChatInputProps {
   onStop?: () => void;
   initialValue?: string;
   inputKey?: number;
+  placeholder?: string;
 }
 
 export function ChatInput({
@@ -24,9 +20,11 @@ export function ChatInput({
   onStop,
   initialValue = "",
   inputKey = 0,
+  placeholder = "给 AIGC Chat 发送消息",
 }: ChatInputProps) {
   const [value, setValue] = useState(initialValue);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
     setValue(initialValue);
@@ -59,22 +57,30 @@ export function ChatInput({
     <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent px-4 pb-6 pt-10">
       <div className="pointer-events-auto mx-auto max-w-3xl">
         <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-input)] px-4 py-3 shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition focus-within:border-[var(--accent)] focus-within:shadow-[0_4px_24px_rgba(77,107,254,0.12)]">
+          <button
+            type="button"
+            onClick={() => setShowActions(!showActions)}
+            aria-label="添加附件"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-secondary)] transition hover:bg-gray-100 hover:cursor-pointer"
+          >
+            <LineIcon name={LINE_ICONS.plus} size={18} />
+          </button>
           <textarea
             ref={textareaRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            placeholder="给 AIGC Chat 发送消息"
+            placeholder={placeholder}
             rows={1}
-            className="max-h-40 min-h-[24px] flex-1 resize-none bg-transparent text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none disabled:opacity-50"
+            className="max-h-40 min-h-[30px] flex-1 resize-none bg-transparent text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none disabled:opacity-50"
           />
           {isGenerating ? (
             <button
               type="button"
               onClick={onStop}
               aria-label="停止生成"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] transition hover:bg-gray-50"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] transition hover:bg-gray-50 hover:cursor-pointer"
             >
               <LineIcon name={LINE_ICONS.pause} size={14} />
             </button>
@@ -84,11 +90,18 @@ export function ChatInput({
               onClick={handleSend}
               disabled={disabled || !value.trim()}
               aria-label="发送消息"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-white transition hover:bg-[var(--accent-hover)] hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
             >
               <LineIcon name={LINE_ICONS.send} size={16} />
             </button>
           )}
+          <button
+            type="button"
+            aria-label="语音输入"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-secondary)] transition hover:bg-gray-100 hover:cursor-pointer"
+          >
+            <LineIcon name={LINE_ICONS.microphone} size={16} />
+          </button>
         </div>
         <p className="mt-2 text-center text-xs text-[var(--text-muted)]">
           内容由 AI 生成，请仔细甄别

@@ -42,7 +42,7 @@ export function MessageSources({ content }: MessageSourcesProps) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[var(--text-primary)] shadow-sm transition hover:bg-gray-50"
+        className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[var(--text-primary)] shadow-sm transition hover:bg-gray-50 hover:cursor-pointer"
       >
         <FaviconStack sources={sources} />
         <span>{sources.length} 个网页</span>
@@ -56,7 +56,7 @@ export function MessageSources({ content }: MessageSourcesProps) {
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-gray-50 hover:text-[var(--accent)]"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-gray-50 hover:text-[var(--accent)] hover:cursor-pointer"
               >
                 <img
                   src={getFaviconUrl(source.domain)}

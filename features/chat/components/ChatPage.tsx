@@ -1,22 +1,26 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChatInput } from "@/features/chat/components/ChatInput";
 import { ConversationSidebar } from "@/features/chat/components/ConversationSidebar";
 import { MessageList } from "@/features/chat/components/MessageList";
 import { useChat } from "@/features/chat/hooks/useChat";
 import { useAuthStore } from "@/stores/authStore";
+import { useGuestStore, GUEST_USER_ID } from "@/stores/guestStore";
 import { useConversationStore } from "@/stores/conversationStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import type { User } from "@/types/domain";
 import { ChatHeader } from "@/features/chat/components/ChatHeader";
 import { ChatPageSkeleton } from "@/features/chat/components/ChatPageSkeleton";
 import { GlobalSearchModal } from "@/features/chat/components/GlobalSearchModal";
+import { LoginModal } from "@/features/auth/components/LoginModal";
 
-function ChatPageContent({ user }: { user: User }) {
+function ChatPageContent({ user }: { user: User | null }) {
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clear);
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const exitGuest = useGuestStore((s) => s.exitGuest);
   const model = useSettingsStore((s) => s.model);
   const setModel = useSettingsStore((s) => s.setModel);
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
@@ -33,10 +37,14 @@ function ChatPageContent({ user }: { user: User }) {
   const conversations = useConversationStore((s) => s.conversations);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [draftKey, setDraftKey] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
+
+  // 游客模式使用固定 userId，登录后切换到真实用户
+  const effectiveUserId = user?.id ?? GUEST_USER_ID;
 
   useEffect(() => {
     setEditingMessageId(null);
@@ -44,7 +52,7 @@ function ChatPageContent({ user }: { user: User }) {
 
   useEffect(() => {
     let active = true;
-    initActive(user.id)
+    initActive(effectiveUserId)
       .catch(() => undefined)
       .finally(() => {
         if (active) setInitializing(false);
@@ -52,7 +60,7 @@ function ChatPageContent({ user }: { user: User }) {
     return () => {
       active = false;
     };
-  }, [user.id, initActive]);
+  }, [effectiveUserId, initActive]);
 
   const {
     conversation,
@@ -61,24 +69,25 @@ function ChatPageContent({ user }: { user: User }) {
     sendMessage,
     resendUserMessage,
     stopGeneration,
-  } = useChat(activeConversationId ?? "", user.id);
+  } = useChat(activeConversationId ?? "", effectiveUserId);
 
   const handleNewChat = useCallback(async () => {
     try {
-      const empty = await getOrCreateEmpty(user.id);
+      const empty = await getOrCreateEmpty(effectiveUserId);
       setActiveConversationId(empty.id);
       setSidebarOpen(false);
     } catch {
       // ignore
     }
-  }, [getOrCreateEmpty, setActiveConversationId, user.id]);
+  }, [getOrCreateEmpty, setActiveConversationId, effectiveUserId]);
 
   const handleDelete = useCallback(
     async (id: string) => {
+      if (!user) return; // 游客不能删除
       const isActive = id === activeConversationId;
       await remove(user.id, id);
       if (isActive) {
-        const empty = await getOrCreateEmpty(user.id);
+        const empty = await getOrCreateEmpty(effectiveUserId);
         setActiveConversationId(empty.id);
       }
       setSidebarOpen(false);
@@ -86,7 +95,8 @@ function ChatPageContent({ user }: { user: User }) {
     [
       activeConversationId,
       remove,
-      user.id,
+      user,
+      effectiveUserId,
       getOrCreateEmpty,
       setActiveConversationId,
     ],
@@ -95,7 +105,8 @@ function ChatPageContent({ user }: { user: User }) {
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     clearAuth();
-    router.replace("/login");
+    exitGuest();
+    router.replace("/");
   };
 
   const handleSuggestion = (text: string) => {
@@ -117,6 +128,15 @@ function ChatPageContent({ user }: { user: User }) {
     void resendUserMessage(messageId, content);
   };
 
+  const handleLoginSuccess = () => {
+    setLoginOpen(false);
+    // 游客登录后，切换到真实用户
+    const newUser = useAuthStore.getState().user;
+    if (newUser) {
+      exitGuest();
+    }
+  };
+
   if (initializing || !activeConversationId) {
     return <ChatPageSkeleton />;
   }
@@ -124,7 +144,7 @@ function ChatPageContent({ user }: { user: User }) {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <ConversationSidebar
-        user={user}
+        user={{ id: effectiveUserId, username: user?.username ?? "游客", createdAt: Date.now() }}
         onNewChat={() => void handleNewChat()}
         onDelete={(id) => void handleDelete(id)}
         onOpenSearch={() => setSearchOpen(true)}
@@ -143,7 +163,7 @@ function ChatPageContent({ user }: { user: User }) {
           />
           <div className="relative z-50 h-full w-64 shadow-xl">
             <ConversationSidebar
-              user={user}
+              user={{ id: effectiveUserId, username: user?.username ?? "游客", createdAt: Date.now() }}
               onNewChat={() => void handleNewChat()}
               onDelete={(id) => void handleDelete(id)}
               onOpenSearch={() => {
@@ -157,7 +177,8 @@ function ChatPageContent({ user }: { user: User }) {
 
       <main className="relative flex min-w-0 flex-1 flex-col">
         <ChatHeader
-          user={user}
+          user={{ id: effectiveUserId, username: user?.username ?? "游客", createdAt: Date.now() }}
+          isLoggedIn={Boolean(user)}
           sidebarCollapsed={sidebarCollapsed}
           conversationTitle={conversation?.title ?? "新对话"}
           model={model}
@@ -166,7 +187,8 @@ function ChatPageContent({ user }: { user: User }) {
           onOpenSearch={() => setSearchOpen(true)}
           onOpenMobileSidebar={() => setSidebarOpen(true)}
           onModelChange={setModel}
-          onLogout={() => void handleLogout()}
+          onLogout={handleLogout}
+          onLogin={() => setLoginOpen(true)}
         />
 
         <GlobalSearchModal
@@ -195,7 +217,7 @@ function ChatPageContent({ user }: { user: User }) {
           onResendEdit={handleResendEdit}
         />
 
-        <div className="h-36 shrink-0" />
+        <div className="h-24 shrink-0" />
 
         <ChatInput
           disabled={isGenerating}
@@ -204,28 +226,21 @@ function ChatPageContent({ user }: { user: User }) {
             setDraft("");
             void sendMessage(content);
           }}
-          onStop={stopGeneration}
           initialValue={draft}
           inputKey={draftKey}
         />
       </main>
+
+      <LoginModal
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }
 
 export function ChatPage() {
-  const router = useRouter();
   const user = useAuthStore((s) => s.user);
-
-  useEffect(() => {
-    if (user === null) {
-      router.replace("/login");
-    }
-  }, [user, router]);
-
-  if (!user) {
-    return <ChatPageSkeleton />;
-  }
-
   return <ChatPageContent user={user} />;
 }

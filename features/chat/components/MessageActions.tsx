@@ -25,7 +25,7 @@ function IconButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-gray-100 hover:text-[var(--text-primary)]"
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-gray-100 hover:text-[var(--text-primary)] hover:cursor-pointer"
     >
       <LineIcon name={icon} size={16} />
     </button>

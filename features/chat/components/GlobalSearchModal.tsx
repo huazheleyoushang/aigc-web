@@ -114,7 +114,7 @@ export function GlobalSearchModal({
             type="button"
             aria-label="关闭"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-gray-100 hover:text-[var(--text-primary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-gray-100 hover:text-[var(--text-primary)] hover:cursor-pointer"
           >
             <LineIcon name={LINE_ICONS.close} size={16} />
           </button>
@@ -141,7 +141,7 @@ export function GlobalSearchModal({
                       onMouseEnter={() => setActiveIndex(index)}
                       onClick={() => handleSelect(result.conversationId)}
                       className={`flex w-full items-start gap-3 px-4 py-3 text-left transition ${
-                        isActive ? "bg-gray-50" : "hover:bg-gray-50"
+                        isActive ? "bg-gray-50 hover:cursor-pointer" : "hover:bg-gray-50 hover:cursor-pointer"
                       }`}
                     >
                       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--user-bubble)] text-[var(--accent)]">

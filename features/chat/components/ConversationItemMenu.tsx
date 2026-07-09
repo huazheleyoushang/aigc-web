@@ -145,7 +145,7 @@ export function ConversationItemMenu({
             item.onClick();
             onClose();
           }}
-          className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition hover:bg-gray-100 ${
+          className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition hover:bg-gray-100 hover:cursor-pointer ${
             item.danger
               ? "text-red-500 hover:bg-red-50"
               : "text-[var(--text-primary)]"

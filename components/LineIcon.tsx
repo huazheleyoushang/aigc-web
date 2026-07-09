@@ -20,6 +20,11 @@ export const LINE_ICONS = {
   comment: "comment-1",
   commentPlus: "comment-1-share",
   close: "xmark",
+  folder: "folder-1",
+  briefcase: "briefcase-2",
+  grid: "layout-9",
+  code: "code-1",
+  microphone: "microphone-1",
 } as const;
 
 export type LineIconName = (typeof LINE_ICONS)[keyof typeof LINE_ICONS];

@@ -52,14 +52,14 @@ export function DeleteConversationDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[var(--border)] bg-white px-5 py-2 text-sm text-[var(--text-primary)] transition hover:bg-gray-50"
+            className="rounded-full border border-[var(--border)] bg-white px-5 py-2 text-sm text-[var(--text-primary)] transition hover:bg-gray-50 hover:cursor-pointer"
           >
             取消
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-full bg-[#ef4444] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#dc2626]"
+            className="rounded-full bg-[#ef4444] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#dc2626] hover:cursor-pointer"
           >
             删除该对话
           </button>

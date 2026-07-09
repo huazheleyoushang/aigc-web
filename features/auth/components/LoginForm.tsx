@@ -94,7 +94,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-[var(--accent)] py-2.5 font-medium text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-50"
+        className="w-full rounded-xl bg-[var(--accent)] py-2.5 font-medium text-white transition hover:bg-[var(--accent-hover)] hover:cursor-pointer disabled:opacity-50"
       >
         {loading ? "登录中…" : "登录"}
       </button>

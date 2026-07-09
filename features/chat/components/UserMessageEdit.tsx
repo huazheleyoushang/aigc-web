@@ -72,7 +72,7 @@ export function UserMessageEdit({
           type="button"
           onClick={onCancel}
           disabled={disabled}
-          className="rounded-full border border-[var(--border)] bg-white px-5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-gray-50 disabled:opacity-50"
+          className="rounded-full border border-[var(--border)] bg-white px-5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50"
         >
           取消
         </button>
@@ -80,7 +80,7 @@ export function UserMessageEdit({
           type="button"
           onClick={handleSend}
           disabled={disabled || !value.trim()}
-          className="rounded-full bg-[var(--accent)] px-5 py-1.5 text-sm text-white transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-[var(--accent)] px-5 py-1.5 text-sm text-white transition hover:bg-[var(--accent-hover)] hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
         >
           发送
         </button>
