@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { LINE_ICONS, LineIcon } from "@/components/LineIcon";
 import { BrandLogo } from "@/features/chat/components/BrandLogo";
 import { CompactSidebarToolbar } from "@/features/chat/components/CompactSidebarToolbar";
@@ -88,7 +90,7 @@ export function ChatHeader({
         )}
       </div>
 
-      {/* Right: upgrade + user info / login */}
+      {/* Right: upgrade + user dropdown / login */}
       <div className="flex shrink-0 items-center gap-3">
         {isLoggedIn && (
           <>
@@ -99,28 +101,92 @@ export function ChatHeader({
               <LineIcon name={LINE_ICONS.bolt} size={16} />
               升级
             </button>
-            <span className="hidden text-sm text-[var(--text-secondary)] sm:inline">
-              {user.username}
-            </span>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="rounded-lg px-3 py-1.5 text-[var(--text-secondary)] transition hover:bg-gray-100 hover:text-[var(--text-primary)] hover:cursor-pointer"
-            >
-              登出
-            </button>
+            {/* 用户名下拉菜单 */}
+            <UserDropdown
+              username={user.username}
+              onLogout={onLogout}
+            />
           </>
         )}
         {!isLoggedIn && (
           <button
             type="button"
             onClick={onLogin}
-            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent)]/90 hover:cursor-pointer"
+            className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 hover:cursor-pointer"
           >
             登录
           </button>
         )}
       </div>
     </header>
+  );
+}
+
+/* ── User dropdown ─────────────────────────────────────────────── */
+function UserDropdown({ username, onLogout }: { username: string; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current?.contains(e.target as Node) ||
+        triggerRef.current?.contains(e.target as Node)
+      ) return;
+      setOpen(false);
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  if (!mounted) return null;
+
+  const menu = open ? createPortal(
+    <div
+      ref={menuRef}
+      className="fixed right-4 top-[52px] z-[120] min-w-[160px] overflow-hidden rounded-xl border border-[var(--border)] bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+    >
+      <div className="px-3 py-2 text-xs text-[var(--text-tertiary)]">{username}</div>
+      <div className="border-t border-[var(--border)]" />
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onLogout(); }}
+        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-red-500 transition hover:bg-red-50 hover:cursor-pointer"
+      >
+        <LineIcon name={LINE_ICONS.logout} size={16} />
+        退出登录
+      </button>
+    </div>,
+    document.body,
+  ) : null;
+
+  return (
+    <>
+      <div
+        ref={triggerRef}
+        onClick={() => setOpen((v) => !v)}
+        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-gray-100"
+      >
+        <span className="text-sm text-[var(--text-secondary)]">{username}</span>
+        <LineIcon
+          name={open ? LINE_ICONS.chevronUp : LINE_ICONS.chevronDown}
+          size={14}
+          className="text-[var(--text-muted)]"
+        />
+      </div>
+      {menu}
+    </>
   );
 }

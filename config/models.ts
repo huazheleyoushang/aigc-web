@@ -6,14 +6,14 @@ export interface ModelConfig {
 
 export const MODELS: ModelConfig[] = [
   {
-    id: "xopqwen36v35b",
-    label: "Qwen3.6-35B-A3B",
-    isDefault: true,
-  },
-  {
     id: "agnes-2.0-flash",
     label: "Agnes 2.0 Flash",
   },
+  {
+    id: "xopqwen36v35b",
+    label: "Qwen3.6-35B-A3B",
+    isDefault: true,
+  }
 ];
 
 export function getDefaultModel(): ModelConfig {

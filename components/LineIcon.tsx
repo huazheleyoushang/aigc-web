@@ -25,6 +25,9 @@ export const LINE_ICONS = {
   grid: "layout-9",
   code: "code-1",
   microphone: "microphone-1",
+  logout: "outdent",
+  chevronUp: "chevron-up",
+  chevronDown: "chevron-down",
 } as const;
 
 export type LineIconName = (typeof LINE_ICONS)[keyof typeof LINE_ICONS];
