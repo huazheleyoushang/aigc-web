@@ -202,12 +202,6 @@ sudo nginx -t && sudo systemctl reload nginx
 | Nginx | `443` | SSL 终结、反向代理 |
 | Node 进程 | `0.0.0.0:3000` | standalone server |
 
-## 默认账号
-
-| 用户名 | 密码 |
-|--------|------|
-| admin | admin123 |
-
 > 生产环境请修改 `config/app.ts` 中的 `MOCK_USERS` 或接入真实认证。
 
 ## 相关文档
