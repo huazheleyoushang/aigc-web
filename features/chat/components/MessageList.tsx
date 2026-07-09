@@ -39,11 +39,7 @@ export function MessageList({
   if (messages.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-8 px-4 text-center">
-        {/* Brand icon */}
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent)] text-2xl font-bold text-white shadow-lg shadow-blue-200">
-          A
-        </div>
-
+        
         {/* Welcome text */}
         <h1 className="text-xl font-medium text-[var(--text-primary)]">
           今天有什么计划？

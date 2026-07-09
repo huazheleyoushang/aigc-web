@@ -10,6 +10,10 @@ export const MODELS: ModelConfig[] = [
     label: "Qwen3.6-35B-A3B",
     isDefault: true,
   },
+  {
+    id: "agnes-2.0-flash",
+    label: "Agnes 2.0 Flash",
+  },
 ];
 
 export function getDefaultModel(): ModelConfig {

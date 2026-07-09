@@ -1,6 +1,7 @@
 "use client";
 
 import { LINE_ICONS, LineIcon } from "@/components/LineIcon";
+import { BrandLogo } from "@/features/chat/components/BrandLogo";
 import { CompactSidebarToolbar } from "@/features/chat/components/CompactSidebarToolbar";
 import { MODELS } from "@/config/models";
 import type { User } from "@/types/domain";
@@ -49,9 +50,7 @@ export function ChatHeader({
 
         {sidebarCollapsed ? (
           <div className="hidden items-center gap-3 md:flex">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-xs font-bold text-white">
-              A
-            </div>
+            <BrandLogo size="sm" />
             <CompactSidebarToolbar
               collapsed={sidebarCollapsed}
               onToggleCollapse={onToggleSidebar}

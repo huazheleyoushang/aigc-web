@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { LINE_ICONS, LineIcon } from "@/components/LineIcon";
+import { BrandLogo } from "@/features/chat/components/BrandLogo";
 import { ConversationItemMenu } from "@/features/chat/components/ConversationItemMenu";
 import { DeleteConversationDialog } from "@/features/chat/components/DeleteConversationDialog";
 import { RenameDialog } from "@/features/chat/components/RenameDialog";
@@ -143,11 +144,7 @@ export function ConversationSidebar({
         >
           {/* 顶部：小 logo */}
           <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-xs font-bold text-white">
-                A
-              </div>
-            </div>
+            <BrandLogo size="sm" />
             {onToggleCollapse && (
               <button
                 type="button"
